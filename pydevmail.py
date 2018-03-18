@@ -10,11 +10,13 @@ import argparse
 
 # the first and only argument is the link to the mailman archives page
 parser = argparse.ArgumentParser()
-parser.add_argument('base_link', help='mailing list archive link', type=str)
+parser.add_argument('suffix', help='mailing list archive link', type=str)
 args = parser.parse_args()
-base_link = args.base_link
 
-tokens = base_link.split('/')
+base_link = 'https://mail.python.org/pipermail/'
+page_link = base_link + args.suffix
+
+tokens = page_link.split('/')
 name = tokens[-1] if tokens[-1] else tokens[-2]
 
 print('Creating tmp directory...')
@@ -22,10 +24,12 @@ os.mkdir(name + '-tmp')
 print('Entering tmp directory...')
 os.chdir(name + '-tmp')
 print('Obtaining download links...')
-links = requests_html.HTMLSession().get(base_link).html.absolute_links
+links = requests_html.HTMLSession().get(page_link).html.absolute_links
 
 gz_links = [link for link in links if '.txt.gz' in link]
 if not gz_links:
+    os.chdir('..')
+    os.rmdir(name + '-tmp')
     raise ValueError('No gzipped text file links found on page.')
 
 gz_files = [gz_link.split('/')[-1] for gz_link in gz_links]
